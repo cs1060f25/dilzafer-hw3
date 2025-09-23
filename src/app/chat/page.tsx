@@ -135,7 +135,7 @@ export default function ChatPage() {
         
         <button
           onClick={handleNewChat}
-          className="mb-4 py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+          className="mb-4 py-2 px-4 bg-green-600 hover:bg-green-700 rounded-md transition-colors"
         >
           New Chat
         </button>

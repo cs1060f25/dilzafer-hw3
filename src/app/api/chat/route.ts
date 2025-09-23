@@ -3,8 +3,7 @@ import openai, { SOCRATIC_SYSTEM_PROMPT } from '@/lib/openai';
 import { 
   createSession, 
   addMessage, 
-  getMessages,
-  getUser 
+  getMessages
 } from '@/lib/db';
 import { ChatRequest } from '@/types';
 

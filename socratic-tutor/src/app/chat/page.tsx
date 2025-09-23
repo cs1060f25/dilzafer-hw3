@@ -10,18 +10,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Check authentication
-    const storedUserId = localStorage.getItem('userId');
-    if (!storedUserId) {
-      router.push('/login');
-      return;
-    }
-    setUserId(storedUserId);
-  }, [router]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -30,7 +19,7 @@ export default function ChatPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading || !userId) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -50,7 +39,6 @@ export default function ChatPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId,
           sessionId,
           message: input
         }),
@@ -121,14 +109,6 @@ export default function ChatPage() {
     setSessionId(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('userId');
-    router.push('/login');
-  };
-
-  if (!userId) {
-    return null;
-  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -145,16 +125,6 @@ export default function ChatPage() {
 
         <div className="flex-1"></div>
 
-        <div className="text-sm text-gray-400 mb-4">
-          Logged in as: {userId}
-        </div>
-
-        <button
-          onClick={handleLogout}
-          className="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors"
-        >
-          Logout
-        </button>
       </div>
 
       {/* Main Chat Area */}

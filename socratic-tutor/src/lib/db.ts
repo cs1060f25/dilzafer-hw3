@@ -1,71 +1,39 @@
-import { db } from './firebase';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  getDoc, 
-  getDocs,
-  setDoc, 
-  query, 
-  orderBy,
-  serverTimestamp 
-} from 'firebase/firestore';
 import { User, Session, Message } from '@/types';
+
+// In-memory storage
+const users = new Map<string, User>();
+const sessions = new Map<string, Session>();
+const messages = new Map<string, Message[]>();
 
 // User functions
 export async function createUser(userId: string, name: string, email: string): Promise<void> {
-  const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, {
+  users.set(userId, {
+    id: userId,
     name,
     email,
-    createdAt: serverTimestamp()
+    createdAt: new Date()
   });
 }
 
 export async function getUser(userId: string): Promise<User | null> {
-  const userRef = doc(db, 'users', userId);
-  const userDoc = await getDoc(userRef);
-  
-  if (!userDoc.exists()) {
-    return null;
-  }
-  
-  const data = userDoc.data();
-  return {
-    id: userDoc.id,
-    name: data.name,
-    email: data.email,
-    createdAt: data.createdAt?.toDate() || new Date()
-  };
+  return users.get(userId) || null;
 }
 
 // Session functions
 export async function createSession(userId: string, topic: string): Promise<string> {
-  const sessionsRef = collection(db, 'sessions');
-  const docRef = await addDoc(sessionsRef, {
+  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  sessions.set(sessionId, {
+    id: sessionId,
     userId,
     topic,
-    createdAt: serverTimestamp()
+    createdAt: new Date()
   });
-  return docRef.id;
+  messages.set(sessionId, []);
+  return sessionId;
 }
 
 export async function getSession(sessionId: string): Promise<Session | null> {
-  const sessionRef = doc(db, 'sessions', sessionId);
-  const sessionDoc = await getDoc(sessionRef);
-  
-  if (!sessionDoc.exists()) {
-    return null;
-  }
-  
-  const data = sessionDoc.data();
-  return {
-    id: sessionDoc.id,
-    userId: data.userId,
-    topic: data.topic,
-    createdAt: data.createdAt?.toDate() || new Date(),
-    summary: data.summary
-  };
+  return sessions.get(sessionId) || null;
 }
 
 // Message functions
@@ -74,26 +42,20 @@ export async function addMessage(
   role: 'user' | 'assistant', 
   content: string
 ): Promise<void> {
-  const messagesRef = collection(db, `sessions/${sessionId}/messages`);
-  await addDoc(messagesRef, {
+  const sessionMessages = messages.get(sessionId) || [];
+  sessionMessages.push({
+    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     role,
     content,
-    timestamp: serverTimestamp()
+    timestamp: new Date()
   });
+  messages.set(sessionId, sessionMessages);
 }
 
 export async function getMessages(sessionId: string): Promise<Message[]> {
-  const messagesRef = collection(db, `sessions/${sessionId}/messages`);
-  const q = query(messagesRef, orderBy('timestamp', 'asc'));
-  const messagesSnap = await getDocs(q);
-  
-  return messagesSnap.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      role: data.role,
-      content: data.content,
-      timestamp: data.timestamp?.toDate() || new Date()
-    };
-  });
+  return messages.get(sessionId) || [];
 }
+
+// Initialize a default user for testing
+const DEFAULT_USER_ID = 'default_user';
+createUser(DEFAULT_USER_ID, 'Default User', 'user@example.com');

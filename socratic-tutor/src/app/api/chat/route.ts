@@ -11,21 +11,15 @@ import { ChatRequest } from '@/types';
 export async function POST(req: NextRequest) {
   try {
     const body: ChatRequest = await req.json();
-    const { userId, sessionId, message } = body;
+    const { sessionId, message } = body;
+
+    // Use default user ID
+    const userId = 'default_user';
 
     // Validate request body
-    if (!userId || !message) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+    if (!message) {
+      return new Response(JSON.stringify({ error: 'Missing message' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Verify user exists
-    const user = await getUser(userId);
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }

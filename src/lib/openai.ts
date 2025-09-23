@@ -1,15 +1,22 @@
 import OpenAI from 'openai';
 
-const apiKey = process.env.OPENAI_API_KEY;
+let openai: OpenAI | null = null;
 
-if (!apiKey) {
-  console.error('OPENAI_API_KEY is missing. Available env vars:', Object.keys(process.env).filter(key => key.includes('OPEN')));
-  throw new Error('OPENAI_API_KEY environment variable is missing');
+export function getOpenAI() {
+  if (!openai) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      console.error('OPENAI_API_KEY is missing. Available env vars:', Object.keys(process.env).filter(key => key.includes('OPEN')));
+      throw new Error('OPENAI_API_KEY environment variable is missing');
+    }
+    
+    openai = new OpenAI({
+      apiKey: apiKey,
+    });
+  }
+  return openai;
 }
-
-const openai = new OpenAI({
-  apiKey: apiKey,
-});
 
 export const SOCRATIC_SYSTEM_PROMPT = `You are "Socratic Tutor," an AI assistant for high school students. Your single, most important goal is to help students think for themselves using the Socratic method. You must adhere to the following rules without exception:
 
@@ -24,5 +31,3 @@ Guide Structure, Don't Provide It: Help the student discover a structure for the
 Maintain a Supportive, Encouraging Tone: Be patient and curious. Use phrases like, "That's an interesting point, why do you think that is?" or "Let's explore that idea a bit more. What leads you to that conclusion?"
 
 Keep it Concise: Your questions should be short and to the point to keep the dialogue moving.`;
-
-export default openai;

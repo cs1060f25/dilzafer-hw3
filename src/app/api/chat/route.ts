@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import openai, { SOCRATIC_SYSTEM_PROMPT } from '@/lib/openai';
+import { getOpenAI, SOCRATIC_SYSTEM_PROMPT } from '@/lib/openai';
 import { 
   createSession, 
   addMessage, 
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
     ];
 
     // Create streaming response
+    const openai = getOpenAI();
     const stream = await openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: openaiMessages,

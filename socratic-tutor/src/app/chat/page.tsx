@@ -28,10 +28,16 @@ export default function ChatPage() {
       timestamp: new Date()
     };
 
+    // Store the input message before clearing it
+    const currentInput = input;
+    
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
+    // Create a stable ID for the assistant message
+    const assistantMessageId = Date.now().toString() + '-assistant';
+    
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -40,7 +46,7 @@ export default function ChatPage() {
         },
         body: JSON.stringify({
           sessionId,
-          message: input
+          message: currentInput
         }),
       });
 
@@ -52,15 +58,29 @@ export default function ChatPage() {
       const decoder = new TextDecoder();
       let assistantMessage = '';
       let currentSessionId = sessionId;
+      let buffer = '';
+
+      // Add initial empty assistant message
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date()
+      }]);
 
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Keep the last line in the buffer if it's incomplete
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
+          if (line.trim() === '') continue;
+          
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             
@@ -80,20 +100,15 @@ export default function ChatPage() {
               if (parsed.text) {
                 assistantMessage += parsed.text;
                 
-                const tempMessage: Message = {
-                  id: Date.now().toString() + '-assistant',
-                  role: 'assistant',
-                  content: assistantMessage,
-                  timestamp: new Date()
-                };
-
-                setMessages(prev => {
-                  const filtered = prev.filter(m => m.id !== tempMessage.id);
-                  return [...filtered, tempMessage];
-                });
+                // Update the existing assistant message
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: assistantMessage }
+                    : msg
+                ));
               }
             } catch (e) {
-              console.error('Error parsing SSE data:', e);
+              console.error('Error parsing SSE data:', e, 'Line:', line);
             }
           }
         }
@@ -101,6 +116,8 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Error sending message:', error);
       setIsLoading(false);
+      // Remove the empty assistant message on error
+      setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
     }
   };
 
@@ -165,17 +182,6 @@ export default function ChatPage() {
                   </div>
                 </div>
               ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-200 text-gray-800 rounded-lg p-4">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-75"></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-150"></div>
-                    </div>
-                  </div>
-                </div>
-              )}
               <div ref={messagesEndRef} />
             </div>
           )}

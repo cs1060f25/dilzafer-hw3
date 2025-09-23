@@ -9,6 +9,15 @@ import { ChatRequest } from '@/types';
 
 export async function POST(req: NextRequest) {
   try {
+    // Check for API key early
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is not set in environment variables');
+      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
     const body: ChatRequest = await req.json();
     const { sessionId, message } = body;
 

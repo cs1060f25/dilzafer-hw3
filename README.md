@@ -1,5 +1,7 @@
 # Socratic AI Platform
-
+Dilzafer Singh
+@dilzafer
+https://docs.google.com/document/d/1bAHmSKrVQGlWotWLgRqK1hRVRtWrxH_9b_bkrOVBKLg/edit?usp=sharing
 An AI-powered Socratic tutor that guides students through brainstorming and structuring their essays using the Socratic method.
 
 ## Features
